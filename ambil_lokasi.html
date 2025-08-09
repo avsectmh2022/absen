@@ -38,7 +38,7 @@
         }
         .loading-spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
+            border-top: 4px solid #4CAF50; /* Green spinner */
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -50,9 +50,9 @@
             100% { transform: rotate(360deg); }
         }
         #error-message {
-            color: #d9534f;
+            color: #d9534f; /* Red for errors */
             font-weight: bold;
-            display: none;
+            display: none; /* Hidden by default */
         }
     </style>
 </head>
@@ -61,55 +61,55 @@
         <h1>Mencari Lokasi Anda...</h1>
         <div class="loading-spinner"></div>
         <p id="status">
-            Mohon tunggu sebentar. Browser Anda akan meminta izin untuk mengakses lokasi. Harap berikan izin agar kami bisa mengarahkan Anda ke formulir.
+            Mohon tunggu sebentar. Untuk melanjutkan, **browser Anda akan meminta izin untuk mengakses lokasi**. Harap berikan izin agar kami bisa mengarahkan Anda ke formulir.
         </p>
-        <p id="error-message"></p>
+        <p id="error-message">
+            </p>
     </div>
 
     <script>
         const statusElement = document.getElementById('status');
         const errorMessageElement = document.getElementById('error-message');
 
-        // --- KONFIGURASI PENTING ---
-        // Ganti URL ini dengan URL Web App Apps Script Anda setelah dipublikasikan
-        const webAppUrl = "https://script.google.com/macros/s/AKfycbzgIYhVOxn4AmbvIAio7rTunS6p2c6Jmv-1iyFNFizsKdDoZHPwcG--F0QlJg7RM5RD/exec";
-
         function getLocation() {
+            // Periksa apakah Geolocation API didukung browser
             if (navigator.geolocation) {
                 const options = {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
+                    enableHighAccuracy: true, // Coba dapatkan lokasi seakurat mungkin
+                    timeout: 15000,           // Batas waktu 15 detik
+                    maximumAge: 0             // Jangan gunakan cache lokasi lama
                 };
+                // Meminta lokasi pengguna
                 navigator.geolocation.getCurrentPosition(showPosition, showError, options);
             } else {
+                // Jika Geolocation tidak didukung
                 statusElement.style.display = 'none';
                 errorMessageElement.style.display = 'block';
-                errorMessageElement.innerHTML = "Maaf, fitur lokasi tidak didukung oleh browser Anda.";
+                errorMessageElement.innerHTML = "Maaf, fitur lokasi tidak didukung oleh browser Anda. Anda tidak dapat melanjutkan.";
             }
         }
 
         function showPosition(position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-            
-            statusElement.innerHTML = `Lokasi ditemukan! Sedang memproses...`;
 
-            // Kirim data lokasi ke Apps Script Web App
-            fetch(`${webAppUrl}?latitude=${latitude}&longitude=${longitude}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Gagal mengirim lokasi ke server.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    window.location.href = data.redirectUrl;
-                })
-                .catch(error => {
-                    errorMessageElement.style.display = 'block';
-                    errorMessageElement.innerHTML = `Gagal memproses data lokasi: ${error.message}`;
-                });
+            statusElement.innerHTML = `Lokasi ditemukan! Latitude: ${latitude}, Longitude: ${longitude}. Anda akan diarahkan ke formulir...`;
+
+            // --- KONFIGURASI PENTING: GANTI DENGAN DATA FORMULIR ANDA ---
+            // 1. Ganti URL ini dengan URL dasar Google Formulir Anda.
+            //    Contoh: "https://docs.google.com/forms/d/e/1FAIpQLSczABCDEFGHIJKL-MNOPQRSTUV/viewform"
+            const googleFormBaseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSc0XU2xCbszay_uvutJhE9Xu0ST7kCOlvXzvuHzMVnWgIzEdw/viewform";
+            
+            // 2. Ganti ini dengan ID entri yang Anda dapatkan dari Tahap 3 sebelumnya.
+            //    Anda sudah menemukannya: entry.242770215 untuk Latitude dan entry.1824187587 untuk Longitude
+            const latitudeEntryId = "entry.242770215";  // ID entri untuk pertanyaan Latitude di Google Formulir Anda
+            const longitudeEntryId = "entry.1824187587"; // ID entri untuk pertanyaan Longitude di Google Formulir Anda
+
+            // Konstruksi URL pengalihan dengan data lokasi pra-isi
+            const redirectUrl = `${googleFormBaseUrl}?${latitudeEntryId}=${latitude}&${longitudeEntryId}=${longitude}`;
+            
+            // Lakukan pengalihan ke Google Formulir
+            window.location.href = redirectUrl;
         }
 
         function showError(error) {
@@ -128,11 +128,13 @@
                     message = "Terjadi kesalahan yang tidak diketahui saat mencoba mendapatkan lokasi.";
                     break;
             }
+            // Sembunyikan pesan status normal dan tampilkan pesan error
             statusElement.style.display = 'none';
             errorMessageElement.style.display = 'block';
             errorMessageElement.innerHTML = `Gagal mendapatkan lokasi: ${message}`;
         }
 
+        // Panggil fungsi getLocation saat halaman HTML selesai dimuat
         window.onload = getLocation;
     </script>
 </body>
